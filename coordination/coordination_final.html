@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코디 이미지 합성 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 3px dashed #667eea;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 60px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-info {
+            margin-top: 20px;
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .selection-area {
+            display: grid;
+            grid-template-columns: 1fr 500px;
+            gap: 40px;
+        }
+
+        .images-section {
+            overflow-y: auto;
+            max-height: 80vh;
+            padding-right: 10px;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            position: relative;
+            border: 4px solid #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+
+        .image-card.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 25px rgba(102, 126, 234, 0.8);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .image-info {
+            padding: 12px;
+            background: white;
+            text-align: center;
+        }
+
+        .product-code {
+            font-weight: 700;
+            color: #333;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+        }
+
+        .category-name {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .select-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 700;
+            display: none;
+        }
+
+        .image-card.selected .select-badge {
+            display: block;
+        }
+
+        .preview-section {
+            position: sticky;
+            top: 20px;
+        }
+
+        .preview-header {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .selected-count {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .selected-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+        }
+
+        .selected-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .selected-item-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .selected-item img {
+            width: 70px;
+            height: 93px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .selected-item-info {
+            flex: 1;
+        }
+
+        .selected-item-code {
+            font-weight: 700;
+            font-size: 1em;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .selected-item-category {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .selected-item-remove {
+            background: #fa709a;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            transition: transform 0.2s;
+        }
+
+        .selected-item-remove:hover {
+            transform: scale(1.15);
+        }
+
+        .layer-controls {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .control-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .composite-preview {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            min-height: 300px;
+            border: 3px solid #e0e0e0;
+        }
+
+        .composite-preview img {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .composite-placeholder {
+            padding: 120px 20px;
+            color: #bbb;
+            font-size: 1.2em;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 700;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #bbb;
+            font-size: 1.05em;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 코디 이미지 합성 시스템</h1>
+        <p class="subtitle">폴더를 선택하면 자동으로 제품 이미지를 불러옵니다</p>
+
+        <!-- Upload Section -->
+        <div class="upload-section" id="uploadSection">
+            <label for="folderInput" class="upload-button">
+                📁 폴더 선택 (자동 로드)
+            </label>
+            <input type="file" id="folderInput" webkitdirectory directory multiple>
+            <div class="upload-info">
+                💡 폴더를 선택하세요<br>
+                하위 폴더에서 품번을 찾아 "제품" 이미지를 자동으로 가져옵니다
+            </div>
+        </div>
+
+        <div class="selection-area hidden" id="selectionArea">
+            <!-- Left: Image Selection -->
+            <div class="images-section">
+                <!-- Quick Navigation -->
+                <div style="position: sticky; top: 0; background: white; z-index: 10; padding: 15px 0; margin-bottom: 20px; border-bottom: 2px solid #eee;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="scrollToCategory('top')" style="flex: 1; min-width: 100px; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            👔 상의
+                        </button>
+                        <button onclick="scrollToCategory('bottom')" style="flex: 1; min-width: 100px; padding: 12px 20px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            👖 하의
+                        </button>
+                        <button onclick="scrollToCategory('dress')" style="flex: 1; min-width: 100px; padding: 12px 20px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            👗 원피스
+                        </button>
+                    </div>
+                </div>
+                <div id="imagesSection"></div>
+            </div>
+
+            <!-- Right: Preview & Controls -->
+            <div class="preview-section">
+                <div class="preview-header">선택된 이미지</div>
+                <div class="selected-count" id="selectedCount">0개 선택됨</div>
+                <div class="selected-list" id="selectedList">
+                    <div class="empty-state">이미지를 선택해주세요</div>
+                </div>
+
+                <div class="composite-preview" id="compositePreview">
+                    <div class="composite-placeholder">합성하기를 클릭하세요</div>
+                </div>
+
+                <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 0.9em; font-weight: 600; color: #555;">배경 제거 강도</span>
+                        <span style="font-size: 0.9em; font-weight: 700; color: #667eea;" id="bgThresholdValue">200</span>
+                    </div>
+                    <input type="range" id="bgThreshold" min="150" max="250" step="5" value="200"
+                           oninput="document.getElementById('bgThresholdValue').textContent = this.value"
+                           style="width: 100%;">
+                    <div style="font-size: 0.75em; color: #999; margin-top: 5px;">
+                        낮을수록 더 많이 제거 (150-250)
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="renderComposite()">🎨 합성하기</button>
+                    <button class="btn btn-success" onclick="addToCart()">🛒 장바구니 추가</button>
+                    <button class="btn btn-warning" onclick="clearSelection()">🗑️ 선택 초기화</button>
+                </div>
+                <div id="statusMessage"></div>
+
+                <!-- 장바구니 섹션 -->
+                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">🛒 장바구니</h3>
+                        <button class="btn btn-primary" onclick="sendToSlack()" style="padding: 10px 20px;">📤 코디완료 (슬랙전송)</button>
+                    </div>
+                    <div id="cartSection" style="max-height: 400px; overflow-y: auto;">
+                        <div style="text-align: center; color: #999; padding: 20px;">장바구니가 비어있습니다</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Category mapping
+        const CATEGORY_MAP = {
+            'BL': { type: 'top', name: '블라우스' },
+            'CA': { type: 'top', name: '카디건' },
+            'SW': { type: 'top', name: '스웨터' },
+            'TS': { type: 'top', name: '티셔츠' },
+            'JK': { type: 'top', name: '재킷' },
+            'CT': { type: 'top', name: '코트' },
+            'VT': { type: 'top', name: '조끼' },
+            'PT': { type: 'bottom', name: '팬츠' },
+            'SK': { type: 'bottom', name: '스커트' },
+            'OP': { type: 'dress', name: '원피스' },
+            'ST': { type: 'set', name: '셋업' }
+        };
+
+        // State
+        let uploadedImages = [];
+        let selectedImages = [];
+        let layerSettings = {};
+        let compositeDataURL = null;
+        let cart = []; // 장바구니 (최대 20개)
+
+        // Scroll to category
+        function scrollToCategory(categoryKey) {
+            const element = document.getElementById(`category-${categoryKey}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Extract product code
+        function extractProductCode(filepath) {
+            const match = filepath.match(/([A-Z]{2}\d{2}[A-Z][A-Z]{2}\d{3})/);
+            return match ? match[1] : null;
+        }
+
+        // Parse product code
+        function parseProductCode(productCode) {
+            const pattern = /^([A-Z]{2})(\d{2})([A-Z])([A-Z]{2})(\d{3})$/;
+            const match = productCode.match(pattern);
+            if (!match) return null;
+
+            const [_, brand, year, season, categoryCode, serial] = match;
+            const categoryInfo = CATEGORY_MAP[categoryCode];
+            if (!categoryInfo) return null;
+
+            return {
+                productCode,
+                categoryType: categoryInfo.type,
+                categoryName: categoryInfo.name
+            };
+        }
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up folder upload...');
+
+            // Folder upload
+            const folderInput = document.getElementById('folderInput');
+
+            if (!folderInput) {
+                console.error('folderInput not found!');
+                return;
+            }
+
+            console.log('folderInput found, adding event listener');
+
+            folderInput.addEventListener('change', function(e) {
+                console.log('Change event triggered!');
+                const files = Array.from(e.target.files);
+
+                console.log('Total files selected:', files.length);
+                alert(`선택된 파일: ${files.length}개`);
+                showStatus('📂 파일 스캔 중...', 'success');
+
+                // Filter product images
+                const productImages = files.filter(f => {
+                    const isImage = f.type.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(f.name);
+                    const hasProduct = f.name.includes('제품');
+                    console.log(`File: ${f.name}, isImage: ${isImage}, hasProduct: ${hasProduct}`);
+                    return isImage && hasProduct;
+                });
+
+                console.log('Filtered product images:', productImages.length);
+
+                if (productImages.length === 0) {
+                    showStatus('❌ "제품" 이미지를 찾을 수 없습니다', 'error');
+                    alert('❌ "제품" 이미지를 찾을 수 없습니다');
+                    console.error('No product images found. Check if filenames contain "제품"');
+                    return;
+                }
+
+                showStatus(`📸 ${productImages.length}개 이미지 로딩 중...`, 'success');
+                processImages(productImages);
+            });
+        });
+
+        // Process images
+        function processImages(files) {
+            uploadedImages = [];
+            let loaded = 0;
+
+            console.log('Processing images, total:', files.length);
+
+            files.forEach((file, index) => {
+                const filepath = file.webkitRelativePath || file.name;
+                const productCode = extractProductCode(filepath);
+                const productInfo = productCode ? parseProductCode(productCode) : null;
+
+                console.log(`Processing: ${filepath}, ProductCode: ${productCode}, Category: ${productInfo?.categoryName}`);
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImages.push({
+                        id: index,
+                        filename: file.name,
+                        productCode: productCode || 'Unknown',
+                        categoryName: productInfo ? productInfo.categoryName : 'Unknown',
+                        categoryType: productInfo ? productInfo.categoryType : 'unknown',
+                        dataUrl: e.target.result
+                    });
+
+                    loaded++;
+                    console.log(`Loaded ${loaded}/${files.length}`);
+
+                    if (loaded === files.length) {
+                        console.log('All images loaded, rendering...');
+                        console.log('Uploaded images:', uploadedImages);
+                        renderImages();
+                        showStatus(`✅ ${files.length}개 이미지 로드 완료!`, 'success');
+                    }
+                };
+                reader.onerror = function(err) {
+                    console.error('FileReader error:', err);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Render images
+        function renderImages() {
+            const section = document.getElementById('imagesSection');
+
+            // Group by category
+            const groups = {
+                'top': { name: '상의', items: [] },
+                'bottom': { name: '하의', items: [] },
+                'dress': { name: '원피스', items: [] },
+                'set': { name: '셋업', items: [] }
+            };
+
+            uploadedImages.forEach(img => {
+                const cat = img.categoryType;
+                if (groups[cat]) {
+                    groups[cat].items.push(img);
+                }
+            });
+
+            // Render HTML
+            let html = '';
+            for (const [key, group] of Object.entries(groups)) {
+                if (group.items.length === 0) continue;
+
+                html += `
+                    <div class="category-section" id="category-${key}">
+                        <div class="category-title">${group.name} (${group.items.length}개)</div>
+                        <div class="images-grid">
+                `;
+
+                group.items.forEach(img => {
+                    html += `
+                        <div class="image-card" id="img-${img.id}" onclick="toggleImage(${img.id})">
+                            <img src="${img.dataUrl}" alt="${img.filename}">
+                            <div class="select-badge">✓ 선택됨</div>
+                            <div class="image-info">
+                                <div class="product-code">${img.productCode}</div>
+                                <div class="category-name">${img.categoryName}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+            }
+
+            section.innerHTML = html;
+            document.getElementById('selectionArea').classList.remove('hidden');
+        }
+
+        // Toggle selection
+        function toggleImage(imageId) {
+            const img = uploadedImages.find(i => i.id === imageId);
+            if (!img) return;
+
+            const idx = selectedImages.findIndex(i => i.id === imageId);
+            const el = document.getElementById(`img-${imageId}`);
+
+            if (idx > -1) {
+                selectedImages.splice(idx, 1);
+                el.classList.remove('selected');
+                delete layerSettings[imageId];
+            } else {
+                selectedImages.push(img);
+                el.classList.add('selected');
+
+                // Auto-adjust xoffset based on selection order
+                const currentIndex = selectedImages.length; // 이미 선택된 개수
+                let defaultXOffset = (currentIndex - 1) * 100; // 옆으로 배치
+
+                layerSettings[imageId] = {
+                    scale: 1.0, // 모두 같은 크기
+                    xoffset: defaultXOffset,
+                    yoffset: 0, // 모두 같은 높이
+                    filters: { hue: 0, saturation: 100, brightness: 100, contrast: 100 }
+                };
+            }
+
+            updateSelectedList();
+        }
+
+        // Update selected list
+        function updateSelectedList() {
+            const list = document.getElementById('selectedList');
+            const count = document.getElementById('selectedCount');
+
+            count.textContent = `${selectedImages.length}개 선택됨`;
+
+            if (selectedImages.length === 0) {
+                list.innerHTML = '<div class="empty-state">이미지를 선택해주세요</div>';
+                return;
+            }
+
+            let html = '';
+            selectedImages.forEach(img => {
+                const s = layerSettings[img.id];
+                html += `
+                    <div class="selected-item">
+                        <div class="selected-item-header">
+                            <img src="${img.dataUrl}" alt="${img.filename}">
+                            <div class="selected-item-info">
+                                <div class="selected-item-code">${img.productCode}</div>
+                                <div class="selected-item-category">${img.categoryName}</div>
+                            </div>
+                            <button class="selected-item-remove" onclick="toggleImage(${img.id})">×</button>
+                        </div>
+                        <div class="layer-controls">
+                            <div class="control-group">
+                                <div class="control-label">
+                                    <span>크기 (Scale)</span>
+                                    <span class="control-value" id="scale-${img.id}">${s.scale.toFixed(2)}</span>
+                                </div>
+                                <input type="range" min="0.1" max="2.0" step="0.01" value="${s.scale}"
+                                       oninput="updateSetting(${img.id}, 'scale', parseFloat(this.value))">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">
+                                    <span>위치 (Y Offset)</span>
+                                    <span class="control-value" id="yoffset-${img.id}">${s.yoffset}</span>
+                                </div>
+                                <input type="range" min="-300" max="300" step="10" value="${s.yoffset}"
+                                       oninput="updateSetting(${img.id}, 'yoffset', parseInt(this.value))">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label"><span>컬러 필터</span></div>
+                                <div class="filter-grid">
+                                    <div>
+                                        <div class="control-label">
+                                            <span style="font-size:0.75em">색조</span>
+                                            <span class="control-value" id="hue-${img.id}">${s.filters.hue}°</span>
+                                        </div>
+                                        <input type="range" min="0" max="360" step="1" value="${s.filters.hue}"
+                                               oninput="updateFilter(${img.id}, 'hue', parseInt(this.value))">
+                                    </div>
+                                    <div>
+                                        <div class="control-label">
+                                            <span style="font-size:0.75em">채도</span>
+                                            <span class="control-value" id="saturation-${img.id}">${s.filters.saturation}%</span>
+                                        </div>
+                                        <input type="range" min="0" max="200" step="1" value="${s.filters.saturation}"
+                                               oninput="updateFilter(${img.id}, 'saturation', parseInt(this.value))">
+                                    </div>
+                                    <div>
+                                        <div class="control-label">
+                                            <span style="font-size:0.75em">밝기</span>
+                                            <span class="control-value" id="brightness-${img.id}">${s.filters.brightness}%</span>
+                                        </div>
+                                        <input type="range" min="0" max="200" step="1" value="${s.filters.brightness}"
+                                               oninput="updateFilter(${img.id}, 'brightness', parseInt(this.value))">
+                                    </div>
+                                    <div>
+                                        <div class="control-label">
+                                            <span style="font-size:0.75em">대비</span>
+                                            <span class="control-value" id="contrast-${img.id}">${s.filters.contrast}%</span>
+                                        </div>
+                                        <input type="range" min="0" max="200" step="1" value="${s.filters.contrast}"
+                                               oninput="updateFilter(${img.id}, 'contrast', parseInt(this.value))">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+        }
+
+        // Update settings
+        function updateSetting(imageId, key, value) {
+            if (layerSettings[imageId]) {
+                layerSettings[imageId][key] = value;
+                const displayValue = key === 'scale' ? value.toFixed(2) : value;
+                document.getElementById(`${key}-${imageId}`).textContent = displayValue;
+            }
+        }
+
+        function updateFilter(imageId, filterType, value) {
+            if (layerSettings[imageId]) {
+                layerSettings[imageId].filters[filterType] = value;
+                const displayValue = filterType === 'hue' ? `${value}°` : `${value}%`;
+                document.getElementById(`${filterType}-${imageId}`).textContent = displayValue;
+            }
+        }
+
+        // Clear selection
+        function clearSelection() {
+            if (selectedImages.length === 0) return;
+            if (!confirm('선택을 모두 초기화하시겠습니까?')) return;
+
+            selectedImages.forEach(img => {
+                document.getElementById(`img-${img.id}`).classList.remove('selected');
+            });
+
+            selectedImages = [];
+            layerSettings = {};
+            compositeDataURL = null;
+            updateSelectedList();
+            document.getElementById('compositePreview').innerHTML = '<div class="composite-placeholder">합성하기를 클릭하세요</div>';
+            showStatus('선택이 초기화되었습니다', 'success');
+        }
+
+        // Load image
+        function loadImage(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
+        // Render composite (세로로 배치)
+        async function renderComposite() {
+            if (selectedImages.length === 0) {
+                showStatus('❌ 이미지를 먼저 선택해주세요', 'error');
+                return;
+            }
+
+            try {
+                showStatus('🎨 합성 중...', 'success');
+                console.log('Selected images:', selectedImages.length);
+
+                // 카테고리별로 정렬 (상의 -> 하의 -> 원피스 -> 셋업)
+                const sortOrder = { 'top': 1, 'bottom': 2, 'dress': 3, 'set': 4, 'unknown': 5 };
+                const sortedImages = [...selectedImages].sort((a, b) => {
+                    return sortOrder[a.categoryType] - sortOrder[b.categoryType];
+                });
+
+                console.log('Sorted images by category:', sortedImages.map(img => `${img.productCode} (${img.categoryType})`));
+
+                // 모든 이미지 먼저 로드
+                const loadedImages = [];
+                for (const imgData of sortedImages) {
+                    const img = await loadImage(imgData.dataUrl);
+                    loadedImages.push(img);
+                }
+
+                // 모든 이미지 같은 너비로 맞추기 (세로 배치)
+                const maxWidth = 600;
+                let totalHeight = 0;
+
+                const imageData = loadedImages.map(img => {
+                    const aspect = img.width / img.height;
+                    const drawW = maxWidth;
+                    const drawH = maxWidth / aspect;
+                    totalHeight += drawH;
+                    return { img, drawW, drawH };
+                });
+
+                // 캔버스 생성
+                const canvas = document.createElement('canvas');
+                canvas.width = maxWidth;
+                canvas.height = totalHeight;
+                const ctx = canvas.getContext('2d');
+
+                // 흰색 배경
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, maxWidth, totalHeight);
+
+                // 이미지 세로로 배치
+                let currentY = 0;
+                imageData.forEach(({ img, drawW, drawH }) => {
+                    ctx.drawImage(img, 0, currentY, drawW, drawH);
+                    currentY += drawH;
+                });
+
+                console.log('All layers drawn, converting to data URL...');
+                compositeDataURL = canvas.toDataURL('image/jpeg', 0.92);
+                console.log('Composite created, length:', compositeDataURL.length);
+
+                document.getElementById('compositePreview').innerHTML = `<img src="${compositeDataURL}" alt="합성 이미지">`;
+                showStatus('✅ 합성 완료!', 'success');
+            } catch (error) {
+                console.error('Composite error:', error);
+                showStatus('❌ 합성 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 장바구니에 추가
+        function addToCart() {
+            if (!compositeDataURL) {
+                showStatus('❌ 먼저 합성하기를 클릭하세요', 'error');
+                return;
+            }
+
+            if (cart.length >= 20) {
+                showStatus('❌ 장바구니가 가득 찼습니다 (최대 20개)', 'error');
+                return;
+            }
+
+            const productCodes = selectedImages.map(img => img.productCode).join(' + ');
+            cart.push({
+                id: Date.now(),
+                imageDataUrl: compositeDataURL,
+                productCodes: productCodes,
+                timestamp: new Date().toLocaleString('ko-KR')
+            });
+
+            updateCartDisplay();
+            showStatus(`✅ 장바구니에 추가됨 (${cart.length}/20)`, 'success');
+
+            // 선택 초기화 (확인 없이)
+            clearSelectionSilent();
+        }
+
+        // 조용히 초기화 (확인 없이)
+        function clearSelectionSilent() {
+            if (selectedImages.length === 0) return;
+
+            selectedImages.forEach(img => {
+                document.getElementById(`img-${img.id}`).classList.remove('selected');
+            });
+
+            selectedImages = [];
+            layerSettings = {};
+            compositeDataURL = null;
+            updateSelectedList();
+            document.getElementById('compositePreview').innerHTML = '<div class="composite-placeholder">합성하기를 클릭하세요</div>';
+        }
+
+        // 장바구니 표시 업데이트
+        function updateCartDisplay() {
+            const cartSection = document.getElementById('cartSection');
+            if (cart.length === 0) {
+                cartSection.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">장바구니가 비어있습니다</div>';
+                return;
+            }
+
+            let html = `<div style="font-weight: 600; margin-bottom: 10px;">장바구니 (${cart.length}/20)</div>`;
+            cart.forEach((item, index) => {
+                html += `
+                    <div style="border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; background: white;">
+                        <img src="${item.imageDataUrl}" style="width: 100%; border-radius: 4px; margin-bottom: 5px;">
+                        <div style="font-size: 0.8em; color: #666;">코디 ${index + 1}</div>
+                        <div style="font-size: 0.75em; color: #999;">${item.productCodes}</div>
+                        <div style="font-size: 0.7em; color: #aaa;">${item.timestamp}</div>
+                        <button onclick="removeFromCart(${index})" style="margin-top: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">삭제</button>
+                    </div>
+                `;
+            });
+
+            cartSection.innerHTML = html;
+        }
+
+        // 장바구니에서 제거
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+            showStatus('장바구니에서 제거됨', 'success');
+        }
+
+        // 슬랙으로 전송
+        async function sendToSlack() {
+            if (cart.length === 0) {
+                showStatus('❌ 장바구니가 비어있습니다', 'error');
+                return;
+            }
+
+            const webhookUrl = prompt('슬랙 Webhook URL을 입력하세요:');
+            if (!webhookUrl) return;
+
+            try {
+                showStatus('📤 슬랙 전송 중...', 'success');
+
+                const message = {
+                    text: `🎨 코디 완료 - ${cart.length}개의 코디`,
+                    blocks: [
+                        {
+                            type: 'header',
+                            text: {
+                                type: 'plain_text',
+                                text: `🎨 코디 완료 (${cart.length}개)`
+                            }
+                        }
+                    ]
+                };
+
+                cart.forEach((item, index) => {
+                    message.blocks.push({
+                        type: 'section',
+                        text: {
+                            type: 'mrkdwn',
+                            text: `*코디 ${index + 1}*\n${item.productCodes}\n${item.timestamp}`
+                        }
+                    });
+                });
+
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(message)
+                });
+
+                if (response.ok) {
+                    showStatus('✅ 슬랙 전송 완료!', 'success');
+                    if (confirm('장바구니를 비우시겠습니까?')) {
+                        cart = [];
+                        updateCartDisplay();
+                    }
+                } else {
+                    showStatus('❌ 슬랙 전송 실패', 'error');
+                }
+            } catch (error) {
+                console.error('Slack error:', error);
+                showStatus('❌ 슬랙 전송 실패: ' + error.message, 'error');
+            }
+        }
+
+        // Download
+        function downloadComposite() {
+            if (!compositeDataURL) {
+                showStatus('❌ 먼저 합성하기를 클릭하세요', 'error');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.download = `coordination_${Date.now()}.jpg`;
+            link.href = compositeDataURL;
+            link.click();
+            showStatus('✅ 다운로드 완료!', 'success');
+        }
+
+        // Show status
+        function showStatus(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.className = `status-message status-${type}`;
+            el.textContent = message;
+            if (!message.includes('중')) {
+                setTimeout(() => {
+                    el.textContent = '';
+                    el.className = '';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
