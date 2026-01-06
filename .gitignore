@@ -2,3 +2,11 @@ node_modules/
 .DS_Store
 *.log
 .env
+
+# Claude Code
+.claude/scheduled-tasks/.stamps/
+.claude/scheduled-tasks/*/logs/
+
+# Credentials (never commit!)
+*credentials*.json
+*service-account*.json
