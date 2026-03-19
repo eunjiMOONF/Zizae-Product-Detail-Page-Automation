@@ -726,8 +726,9 @@ def api_auto_load_images():
     if not base_path or not code:
         return jsonify({"success": False, "error": "경로와 품번을 입력해주세요"})
 
-    # 품번 폴더 경로
-    folder = os.path.join(base_path, code)
+    # 품번 폴더 경로 (Windows 역슬래시 → 슬래시 변환)
+    base_path = base_path.replace("\\", "/")
+    folder = os.path.join(base_path, code).replace("\\", "/")
     if not os.path.exists(folder):
         return jsonify({"success": False, "error": f"폴더를 찾을 수 없습니다: {folder}"})
 
@@ -999,4 +1000,4 @@ if __name__ == "__main__":
     print("  지재 상세페이지 생성기")
     print("  http://localhost:5000")
     print("=" * 50)
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
