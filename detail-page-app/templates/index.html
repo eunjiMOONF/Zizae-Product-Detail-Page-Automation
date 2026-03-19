@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지재 상세페이지 생성기</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <style>
+        @font-face { font-family: 'Optima'; src: url('/static/fonts/Optima-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Optima'; src: url('/static/fonts/Optima-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Optima'; src: url('/static/fonts/Optima-Italic.ttf') format('truetype'); font-weight: 400; font-style: italic; font-display: swap; }
+        @font-face { font-family: 'Optima'; src: url('/static/fonts/Optima-BoldItalic.ttf') format('truetype'); font-weight: 700; font-style: italic; font-display: swap; }
+
+        .disclaimer-text { font-family: 'Pretendard', 'Malgun Gothic', '맑은 고딕', sans-serif !important; }
+    </style>
+    <link rel="stylesheet" href="/static/css/style.css?v=20260319w">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <h1 class="logo">ZIZAE<br><small>상세페이지 생성기</small></h1>
+
+            <div class="sheet-loader">
+                <label>스프레드시트 ID 또는 URL</label>
+                <input type="text" id="sheetId" placeholder="스프레드시트 ID 입력">
+                <button id="loadSheetBtn" onclick="loadSheet()">데이터 로드</button>
+            </div>
+
+            <div class="sheet-loader" style="margin-top:10px;">
+                <label>이미지 폴더 경로 (NAS)</label>
+                <input type="text" id="imagePath" placeholder="이미지 폴더 경로 입력">
+                <button onclick="autoLoadImages()">현재 상품 이미지 자동배치</button>
+                <button onclick="autoLoadAll()" style="margin-top:5px;background:#16213e;">전체 상품 자동배치</button>
+            </div>
+
+            <div class="product-list" id="productList">
+                <p class="empty-msg">스프레드시트를 로드해주세요</p>
+            </div>
+
+            <div class="sidebar-actions"></div>
+        </aside>
+
+        <!-- 메인 영역 -->
+        <main class="main-area">
+            <div class="toolbar">
+                <span id="currentProduct">상품을 선택해주세요</span>
+                <div class="toolbar-actions">
+                    <button onclick="exportCurrent()">상세페이지 다운로드</button>
+                    <button onclick="saveState(); alert('임시저장 완료!');">임시저장</button>
+                    <button onclick="exportAllToFolders()">품번 일괄 다운로드</button>
+                    <button onclick="openCart()">장바구니</button>
+                </div>
+            </div>
+
+            <div class="template-wrapper" id="templateWrapper">
+                <!-- 썸네일 생성 섹션 -->
+                <div id="thumbnailSection" style="display:none; width:800px; margin-bottom:20px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin:0; font-size:18px;">썸네일 (정방형) - 스크롤로 확대/축소, 드래그로 위치 조정</h3>
+                        <button onclick="saveAllThumbnails()" style="padding:6px 16px; background:var(--purple); color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px;">일괄 저장</button>
+                    </div>
+                    <div id="thumbnailGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;"></div>
+                </div>
+                <div class="template" id="template" style="display:none;">
+
+                    <!-- ===== FRAME 1: 상단 (800px, pad 45px, gap 47px) ===== -->
+                    <div class="frame frame-1">
+                        <div class="frame-inner" style="padding:45px; display:flex; flex-direction:column; align-items:center; gap:47px;">
+
+                            <!-- 로고 -->
+                            <div class="brand-logos">
+                                <img src="/static/zizae_logo.png" class="brand-logo-img" alt="zizae">
+                            </div>
+
+                            <!-- 메인 이미지 (710x1089) -->
+                            <div class="image-slot main-slot" data-slot="main"
+                                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                                 style="width:710px; height:1089px;">
+                                <span class="slot-label">메인 이미지 (★)</span>
+                            </div>
+
+                            <!-- MD COMMENTS 박스 (710x763, stroke=3px, r=21) -->
+                            <div class="md-comments-box">
+                                <div class="md-comments-inner">
+                                    <div class="md-header">MD COMMENTS</div>
+                                    <div class="bar-divider"></div>
+                                    <div class="detail-points-list" id="detailPointsList"></div>
+                                </div>
+                            </div>
+
+                            <!-- 컬러칩 (원형, 제품컷에서 크롭, gap 27px) -->
+                            <div class="color-chips-row" id="colorChips" style="gap:27px;">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ===== FRAME 2: 중단 (800px, gap 120px) ===== -->
+                    <div class="frame frame-2" style="display:flex; flex-direction:column; gap:120px;">
+
+                        <!-- Colors 섹션 -->
+                        <div class="colors-section">
+                            <!-- Colors 헤더 (타원 안에 텍스트) -->
+                            <div class="oval-header">
+                                <span>Colors</span>
+                            </div>
+                            <!-- 제품컷 2열 배치 (gap 58px) -->
+                            <div class="product-cuts-wrap" id="productCutsWrap" style="gap:58px;">
+                            </div>
+                        </div>
+
+                        <!-- 착장컷 개별 (700x941, radius 21px, gap 30px within group, 120px between groups) -->
+                        <div class="styling-groups" style="display:flex; flex-direction:column; gap:30px; align-items:center;" id="stylingSlots">
+                            <!-- JS에서 동적 생성 -->
+                        </div>
+
+                        <!-- Details 섹션 -->
+                        <div class="details-section">
+                            <div class="oval-header">
+                                <span>Details</span>
+                            </div>
+                            <div class="detail-images-wrap" id="detailImagesWrap" style="gap:58px;">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ===== FRAME 3: 하단 (800px, pad 50px, gap 122px) ===== -->
+                    <div class="frame frame-3">
+                        <div class="frame-inner" style="padding:50px; display:flex; flex-direction:column; align-items:center; gap:122px;">
+
+                            <!-- 패브릭 -->
+                            <div class="section-block fabric-block">
+                                <div class="oval-header small"><span>Fabric</span></div>
+                                <div class="fabric-combined">
+                                    <div class="image-slot fabric-image" data-slot="fabric"
+                                         ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                        <span class="slot-label">패브릭 이미지</span>
+                                    </div>
+                                    <div class="fabric-info-box">
+                                        <div class="fabric-material editable" id="fabricMaterial" ondblclick="makeEditable(this)">폴리에스터100%</div>
+                                        <div class="fabric-desc editable" id="fabricDesc" ondblclick="makeEditable(this)">단단하고 탄탄한 안정적 소재</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 모델인포 -->
+                            <div class="section-block model-block">
+                                <div class="oval-header small"><span>Model</span></div>
+                                <div class="model-content">
+                                    <div class="model-image-fixed">
+                                        <img src="/static/model_photo.png" alt="Model">
+                                    </div>
+                                    <div class="model-info-box">
+                                        <div class="model-name editable" id="modelName" ondblclick="makeEditable(this)">Lee Si Yeon</div>
+                                        <table class="model-table">
+                                            <tr><td class="model-label">HEIGHT</td><td class="model-value editable" id="modelHeight" ondblclick="makeEditable(this)">173cm</td></tr>
+                                            <tr><td class="model-label">WEIGHT</td><td class="model-value editable" id="modelWeight" ondblclick="makeEditable(this)">50kg</td></tr>
+                                            <tr><td class="model-label">TOP</td><td class="model-value editable" id="modelTop" ondblclick="makeEditable(this)">55(S) size</td></tr>
+                                            <tr><td class="model-label">BOTTOM</td><td class="model-value editable" id="modelBottom" ondblclick="makeEditable(this)">26~27(S)</td></tr>
+                                            <tr><td class="model-label">SHOES</td><td class="model-value editable" id="modelShoes" ondblclick="makeEditable(this)">230mm</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 사이즈가이드 -->
+                            <div class="section-block size-guide-block">
+                                <div class="oval-header small"><span>Size Guide</span></div>
+                                <div class="size-sub">나만의 핏을 찾는 추천 사이즈</div>
+                                <div class="size-badges" id="sizeBadges"></div>
+                                <!-- 사이즈 표 (측정방법~ 텍스트는 표 하단에만) -->
+                                <div class="size-table-wrap" id="sizeTableWrap"></div>
+                            </div>
+
+                            <!-- Product Guide (= 상품정보) -->
+                            <div class="section-block product-guide-block">
+                                <div class="oval-header oval-large"><span>Product Guide</span></div>
+                                <table class="product-info-table" id="productInfoTable">
+                                    <tr><td class="pi-label">상품명</td><td class="pi-value editable" id="piName" ondblclick="makeEditable(this)">-</td></tr>
+                                    <tr><td class="pi-label">색상</td><td class="pi-value editable" id="piColors" ondblclick="makeEditable(this)">-</td></tr>
+                                    <tr><td class="pi-label">사이즈</td><td class="pi-value editable" id="piSize" ondblclick="makeEditable(this)">FREE</td></tr>
+                                    <tr><td class="pi-label">구성</td><td class="pi-value editable" id="piComposition" ondblclick="makeEditable(this)">-</td></tr>
+                                    <tr><td class="pi-label">생산지</td><td class="pi-value editable" id="piOrigin" ondblclick="makeEditable(this)">중국</td></tr>
+                                    <tr><td class="pi-label">세탁법</td><td class="pi-value editable" id="piWash" ondblclick="makeEditable(this)">드라이크리닝</td></tr>
+                                    <tr><td class="pi-label">혼용률</td><td class="pi-value editable" id="piMaterial" ondblclick="makeEditable(this)">-</td></tr>
+                                </table>
+                            </div>
+
+                            <!-- Check Point (체크박스 표) -->
+                            <div class="section-block checkpoint-block">
+                                <div class="oval-header oval-large"><span>Check Point</span></div>
+                                <div class="checkpoint-grid">
+                                    <div class="cp-row"><div class="cp-label">안감</div><div class="cp-opt" data-row="lining" data-val="있음" onclick="toggleCP(this)"><span class="cp-box"></span>있음</div><div class="cp-opt" data-row="lining" data-val="없음" onclick="toggleCP(this)"><span class="cp-box"></span>없음</div><div class="cp-opt" data-row="lining" data-val="기모" onclick="toggleCP(this)"><span class="cp-box"></span>기모</div></div>
+                                    <div class="cp-row"><div class="cp-label">비침</div><div class="cp-opt" data-row="seethrough" data-val="있음" onclick="toggleCP(this)"><span class="cp-box"></span>있음</div><div class="cp-opt" data-row="seethrough" data-val="약간" onclick="toggleCP(this)"><span class="cp-box"></span>약간</div><div class="cp-opt" data-row="seethrough" data-val="없음" onclick="toggleCP(this)"><span class="cp-box"></span>없음</div></div>
+                                    <div class="cp-row"><div class="cp-label">신축성</div><div class="cp-opt" data-row="stretch" data-val="좋음" onclick="toggleCP(this)"><span class="cp-box"></span>좋음</div><div class="cp-opt" data-row="stretch" data-val="있음" onclick="toggleCP(this)"><span class="cp-box"></span>있음</div><div class="cp-opt" data-row="stretch" data-val="없음" onclick="toggleCP(this)"><span class="cp-box"></span>없음</div></div>
+                                    <div class="cp-row"><div class="cp-label">두께감</div><div class="cp-opt" data-row="thickness" data-val="두꺼움" onclick="toggleCP(this)"><span class="cp-box"></span>두꺼움</div><div class="cp-opt" data-row="thickness" data-val="적당함" onclick="toggleCP(this)"><span class="cp-box"></span>적당함</div><div class="cp-opt" data-row="thickness" data-val="얇음" onclick="toggleCP(this)"><span class="cp-box"></span>얇음</div></div>
+                                    <div class="cp-row"><div class="cp-label">계절감</div><div class="cp-opt" data-row="season" data-val="봄/가을" onclick="toggleCP(this)"><span class="cp-box"></span>봄/가을</div><div class="cp-opt" data-row="season" data-val="여름" onclick="toggleCP(this)"><span class="cp-box"></span>여름</div><div class="cp-opt" data-row="season" data-val="겨울" onclick="toggleCP(this)"><span class="cp-box"></span>겨울</div></div>
+                                </div>
+                            </div>
+
+                            <!-- 고정 문구 (피그마: Pretendard 22.7px w=400 LEFT #000) -->
+                            <div class="section-block disclaimer-block">
+                                <p class="disclaimer-text">1. 모니터의 해상도에 따라 상품의 색상이 실물과 상이할 수 있습니다.<br>
+                                2. 색상칩은 동일한 디자인에 속한 색상군에 대한 참고자료이며,<br>
+                                &nbsp;&nbsp;&nbsp;실제 상품의 색상과 상이할 수 있습니다.<br>
+                                3. 상품의 실측정보는 상품을 측정하는 위치와 방법, 각도에 따라<br>
+                                &nbsp;&nbsp;&nbsp;1-3cm의 오차가 있을 수 있습니다.<br>
+                                4. 오프라인과 동시 판매중인 상품으로 상품을 준비하는 과정에서<br>
+                                &nbsp;&nbsp;&nbsp;품절이 발생할 수 있습니다.</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 빈 상태 -->
+                <div class="empty-state" id="emptyState">
+                    <h2>지재 상세페이지 생성기</h2>
+                    <p>1. 좌측에서 스프레드시트를 로드하세요</p>
+                    <p>2. 이미지 폴더 경로를 입력하세요</p>
+                    <p>3. 상품 선택 → 이미지 자동배치 → 수정 → Export</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 이미지 조정 모달 -->
+    <div class="image-editor-overlay" id="imageEditor" style="display:none;">
+        <div class="image-editor">
+            <div class="editor-header">
+                <span>이미지 조정</span>
+                <button onclick="closeEditor()">X</button>
+            </div>
+            <div class="editor-preview" id="editorPreview">
+                <img id="editorImg" src="" draggable="false">
+            </div>
+            <div class="editor-controls">
+                <label>확대/축소</label>
+                <input type="range" id="zoomSlider" min="50" max="300" value="100" oninput="updateZoom(this.value)">
+                <span id="zoomValue">100%</span>
+                <button onclick="resetZoom()">맞춤</button>
+                <button onclick="removeImage()">삭제</button>
+                <button class="btn-apply" onclick="applyEditor()">적용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 장바구니 모달 -->
+    <div id="cartModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:none; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; width:700px; max-height:80vh; overflow-y:auto; padding:30px; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:22px;">장바구니 (임시저장 품번)</h2>
+                <button onclick="closeCart()" style="background:none; border:none; font-size:24px; cursor:pointer;">✕</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button onclick="cartSelectAll()" style="padding:6px 14px; background:#333; color:#fff; border:none; border-radius:4px; cursor:pointer;">전체 선택</button>
+                <button onclick="cartDeselectAll()" style="padding:6px 14px; background:#999; color:#fff; border:none; border-radius:4px; cursor:pointer;">전체 해제</button>
+                <button onclick="cartDownloadSelected()" style="padding:6px 14px; background:#6430e9; color:#fff; border:none; border-radius:4px; cursor:pointer;">선택 다운로드</button>
+                <button onclick="cartClearSelected()" style="padding:6px 14px; background:#e74c3c; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-left:auto;">선택 삭제</button>
+            </div>
+            <div id="cartList"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="/static/js/app.js?v=20260319w"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+uploads/
+exports/
+*.log
+.env
+static/fonts/optima2/
+static/fonts/OPTIMA.TTF
+static/fonts/OPTIMA_B.TTF
+static/fonts/Optima_Italic.ttf
+static/fonts/Optima Medium.ttf

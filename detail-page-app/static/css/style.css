@@ -1,0 +1,562 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap');
+/* Pretendard는 HTML head에서 로드 */
+
+/* 피그마 폰트 매핑:
+   Optima → Cormorant Garamond (이탤릭 세리프, 가장 유사)
+   MaruBuriOTF → Noto Serif KR
+   Arita Buri KR → Noto Serif KR
+*/
+/* Optima: HTML head에서 OptLocal로 로드 */
+
+:root {
+    --font-en: 'Optima', Georgia, serif;
+    --font-ko: 'Noto Serif KR', serif;
+    --purple: #6430e9;
+    --dark: #3f3f3f;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-ko); background: #f0f0f0; color: #333; }
+.app-container { display: flex; height: 100vh; }
+
+/* === 사이드바 === */
+.sidebar { width: 280px; background: #1a1a2e; color: #fff; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+.logo { font-family: var(--font-en); font-size: 24px; letter-spacing: 4px; }
+.logo small { font-size: 12px; letter-spacing: 1px; color: #aaa; }
+.sheet-loader { margin-top: 15px; }
+.sheet-loader label { display: block; font-size: 11px; color: #999; margin-bottom: 5px; }
+.sheet-loader input { width: 100%; padding: 8px; border: 1px solid #444; border-radius: 4px; background: #16213e; color: #fff; font-size: 12px; margin-bottom: 8px; }
+.sheet-loader button { width: 100%; padding: 10px; background: #6430e9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.sheet-loader button:hover { background: #5025c0; }
+.product-list { flex: 1; margin-top: 15px; overflow-y: auto; }
+.product-list .empty-msg { color: #666; font-size: 12px; text-align: center; margin-top: 30px; }
+.product-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; }
+.product-item:hover { background: #16213e; }
+.product-item.active { background: #6430e9; }
+.product-item .code { font-size: 13px; font-weight: bold; font-family: monospace; }
+.product-item .name { font-size: 11px; color: #aaa; margin-top: 2px; }
+.product-item.active .name { color: #ddd; }
+.product-item .status { font-size: 10px; color: #666; margin-top: 3px; }
+.sidebar-actions { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+.btn-export { padding: 10px; background: #6430e9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.btn-export-all { padding: 10px; background: transparent; color: #6430e9; border: 1px solid #6430e9; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+/* === 메인 === */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.toolbar { height: 50px; background: #fff; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+.toolbar span { font-weight: bold; font-size: 14px; }
+.toolbar-actions { display: flex; gap: 8px; }
+.toolbar button { padding: 6px 16px; background: #6430e9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.toolbar button:hover { background: #5228c0; }
+.template-wrapper { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 30px; background: #e8e8e8; }
+.empty-state { text-align: center; color: #999; margin-top: 100px; }
+.empty-state h2 { font-size: 24px; margin-bottom: 20px; color: #666; }
+.empty-state p { font-size: 14px; margin-bottom: 8px; }
+
+/* === 템플릿 800px === */
+.template { width: 800px; background: #fff; box-shadow: 0 2px 20px rgba(0,0,0,0.15); }
+
+/* === 이미지 슬롯 공통 (전부 radius 21px, 고정 크기) === */
+.image-slot {
+    position: relative; overflow: hidden; border: 2px dashed #999;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.2s; border-radius: 21px; flex-shrink: 0;
+    background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                      linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #ccc 75%),
+                      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    background-color: #e8e8e8;
+}
+.image-slot:hover { border-color: #6430e9; }
+.image-slot.drag-over { border-color: #6430e9; background: rgba(100,48,233,0.05); }
+.image-slot.has-image { border: none !important; }
+.slot-label { font-size: 13px; color: #aaa; pointer-events: none; }
+.image-slot.has-image .slot-label { display: none; }
+.image-slot img.slot-img { position: absolute; top: 0; left: 0; min-width: 100%; min-height: 100%; object-fit: cover; cursor: grab; border-radius: 21px; }
+.image-slot img.slot-img:active { cursor: grabbing; }
+
+/* === Frame 1: 상단 === */
+.frame-1 { background: #fff; }
+.brand-logos { text-align: center; }
+.brand-logo-img { width: 196px; height: auto; }
+
+/* MD COMMENTS 박스 (검은 테두리, radius 21px, stroke 3px) */
+.md-comments-box {
+    width: 710px;
+    border: 3px solid #000;
+    border-radius: 21px;
+    padding: 36px;
+}
+.md-comments-inner { display: flex; flex-direction: column; gap: 20px; }
+.md-header {
+    font-family: 'Optima', Georgia, serif !important;
+    font-size: 40px;
+    font-weight: 700;
+    color: #000;
+    text-align: center;
+    letter-spacing: 2px;
+}
+.bar-divider {
+    width: 100%;
+    height: 2px;
+    background: #000;
+    margin: 10px 0;
+}
+.bar-divider.thin { height: 1px; background: #3f3f3f; }
+
+/* 디테일 포인트 (배지 radius 4px) */
+.detail-points-list { display: flex; flex-direction: column; gap: 12px; }
+.detail-point { display: flex; align-items: center; gap: 15px; }
+.detail-badge {
+    width: 45px; height: 45px;
+    background: #6430e9;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border-radius: 4px;
+}
+.detail-badge span { font-family: var(--font-en); font-size: 18px; font-weight: bold; color: #fff; }
+.detail-text { font-size: 20px; font-weight: 600; color: #000; }
+
+/* 컬러칩 (원형, 테두리) */
+.color-chips-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.color-chip-circle {
+    width: 90px; height: 89px;
+    border-radius: 50%;
+    border: 1px solid #c6c6c6;
+    overflow: hidden;
+    background: #ddd;
+}
+/* 착장컷 순서 변경 버튼 */
+.styling-order-btns {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 5;
+}
+.styling-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 14px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+}
+.styling-order-btns button {
+    width: 28px; height: 28px; border: none; border-radius: 50%;
+    background: rgba(0,0,0,0.5); color: #fff; font-size: 12px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.styling-order-btns button:hover { background: rgba(100,47,233,0.8); }
+
+/* 제품컷 순서 변경 버튼 */
+.product-swap-btns {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 5;
+}
+.product-swap-btns button {
+    width: 32px; height: 32px; border: none; border-radius: 50%;
+    background: rgba(0,0,0,0.5); color: #fff; font-size: 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.product-swap-btns button:hover { background: rgba(100,47,233,0.8); }
+
+.color-chip-circle img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.color-chip-label {
+    font-family: var(--font-en);
+    font-size: 14px;
+    font-weight: bold;
+    color: #3f3f3f;
+    margin-top: 6px;
+}
+.color-chip-label-ko {
+    font-size: 12px;
+    color: #3f3f3f;
+}
+
+/* === Frame 2: 중단 === */
+.frame-2 { background: #fff; padding: 50px 0; }
+
+/* 타원 헤더 (피그마: stroke=4.4px, Optima bold italic) */
+.oval-header {
+    width: 264px; height: 110px;
+    border: 4px solid var(--dark);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 50px;
+}
+.oval-header span {
+    font-family: 'Optima', Georgia, serif !important;
+    font-size: 55px;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--dark);
+}
+/* Fabric, Model: 268x112, font 50px */
+.oval-header.small { width: 268px; height: 112px; }
+.oval-header.small span { font-size: 50px; }
+/* Size Guide, Product Guide, Check Point: 356x112, font 45~50px */
+.oval-header.oval-large { width: 356px; height: 112px; }
+.oval-header.oval-large span { font-size: 45px; }
+
+/* 제품컷 2열 배치 (377x569 per item, gap 10px, radius 21px) */
+.product-cuts-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 15px;
+}
+.product-cut-pair {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 58px;
+}
+.product-cut-wrapper {
+    text-align: center;
+}
+.product-cut-item {
+    width: 377px;
+    height: 569px;
+    border-radius: 21px;
+}
+/* 홀수 컬러 로고 placeholder */
+.product-logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: none !important;
+    overflow: hidden;
+}
+.product-logo-placeholder .logo-fill {
+    width: 50%;
+    height: auto;
+    object-fit: contain;
+    position: static;
+    border-radius: 0;
+}
+
+/* 컬러명 오버레이 (이미지 위 좌상단) */
+.product-color-overlay {
+    position: absolute;
+    top: 26px;
+    left: 20px;
+    z-index: 20;
+    pointer-events: auto;
+}
+.pco-en-input {
+    display: block;
+    font-family: 'Optima', Georgia, serif !important;
+    font-size: 26px;
+    font-weight: 700;
+    color: #3f3f3f;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed transparent;
+    outline: none;
+    padding: 2px 0;
+    width: 200px;
+}
+.pco-en-input:hover, .pco-en-input:focus {
+    border-bottom: 1px dashed #6430e9;
+    background: rgba(255,255,255,0.85);
+    cursor: text;
+}
+.pco-ko-input {
+    display: block;
+    font-family: var(--font-ko);
+    font-size: 22px;
+    font-weight: 600;
+    color: #3f3f3f;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed transparent;
+    outline: none;
+    padding: 2px 0;
+    margin-top: 2px;
+    width: 200px;
+}
+.pco-ko-input:hover, .pco-ko-input:focus {
+    border-bottom: 1px dashed #6430e9;
+    background: rgba(255,255,255,0.85);
+    cursor: text;
+}
+
+/* 제품컷 - 이미지 위에서도 슬롯이 포인터 이벤트 받도록 */
+.product-cut-item { touch-action: none; cursor: grab; }
+.product-cut-item:active { cursor: grabbing; }
+.product-cut-item > img.slot-img { pointer-events: none; }
+
+/* 착장컷 (700x941, radius 21px) */
+.styling-full { background: #f5f5f5; border-radius: 21px; }
+.styling-single { width: 700px; height: 941px; border-radius: 21px; }
+
+/* 디테일 이미지 (701x500, radius 21px, gap 58px) */
+.detail-images-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 50px;
+}
+.detail-image-item {
+    width: 701px;
+    height: 500px;
+    margin-bottom: 58px;
+    border-radius: 21px;
+}
+
+/* === Frame 3: 하단 === */
+.frame-3 { background: #fff; }
+.section-block { width: 700px; text-align: center; }
+
+/* 패브릭 */
+.fabric-block { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.fabric-combined {
+    width: 700px;
+    border: 3px solid #3f3f3f;
+    border-radius: 21px;
+    overflow: hidden;
+}
+.fabric-image {
+    width: 100%;
+    height: 684px;
+    border-radius: 0 !important;
+    border: none !important;
+}
+.fabric-image.has-image { border-radius: 0 !important; }
+.fabric-image img.slot-img { border-radius: 0 !important; }
+.fabric-info-box {
+    padding: 37px;
+    text-align: center;
+    border-top: 3px solid #3f3f3f;
+}
+.fabric-material { font-size: 36px; font-weight: 700; margin-bottom: 15px; }
+.fabric-desc { font-size: 32px; font-weight: 600; line-height: 1.6; }
+
+/* 모델인포 */
+.model-block { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.model-content {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    width: 700px;
+}
+.model-image-fixed {
+    width: 273px;
+    height: 273px;
+    border-radius: 21px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.model-image-fixed img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.model-image {
+    width: 273px;
+    height: 273px;
+    border-radius: 21px;
+    flex-shrink: 0;
+}
+.model-info-box { flex: 1; }
+.model-name {
+    font-family: var(--font-en);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--dark);
+    text-align: center;
+    margin-bottom: 15px;
+}
+.model-table { width: 100%; border-collapse: collapse; }
+.model-table td { padding: 8px 15px; font-family: 'Optima', Georgia, serif !important; font-size: 22px; color: var(--dark); text-transform: uppercase; }
+.model-label { font-weight: 700; width: 120px; text-align: left; }
+.model-table td:last-child { font-weight: 400; text-align: right; text-transform: none; }
+
+/* 상품명/설명 */
+.product-title {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.product-desc {
+    font-size: 18px;
+    line-height: 1.7;
+    text-align: center;
+    white-space: pre-line;
+    margin-bottom: 15px;
+}
+
+/* 사이즈가이드 (피그마: 타원 356x112, 배지 125x125 r=17) */
+.size-guide-block { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.size-sub { font-size: 28px; font-weight: 600; color: var(--dark); margin-top: -15px; margin-bottom: 40px; }
+.size-badges { width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.size-badge-item { text-align: center; }
+.size-badge-circle {
+    width: 125px; height: 125px;
+    border-radius: 17px;
+    background: var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+}
+.size-badge-input {
+    width: 80px; text-align: center; border: none; background: transparent;
+    font-family: var(--font-ko); font-size: 36px; font-weight: 600; color: #fff;
+}
+
+/* 사이즈 배지 */
+.size-badges-row { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+.size-badge-item { display: flex; flex-direction: column; align-items: center; }
+.size-badge-desc {
+    text-align: center; font-size: 17px; font-weight: 600;
+    color: #000; margin-top: 10px; line-height: 1.5; max-width: 200px;
+}
+.size-badge-comment {
+    text-align: center !important; font-size: 22px; font-weight: 600;
+    color: #000; margin-top: 15px; line-height: 1.5;
+    width: 100%; display: block;
+}
+
+/* 사이즈 측정표 (피그마: 704px, 행 84px, 라벨 154px, 값 91px x 6열, 선 최소) */
+.size-table-wrap { width: 704px; margin-top: 30px; }
+.size-measure-table {
+    width: 704px;
+    border-collapse: collapse;
+    text-align: center;
+    font-family: 'Noto Serif KR', serif;
+}
+.size-measure-table tr { height: 84px; }
+.size-measure-table td {
+    padding: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #000;
+    border: none;
+}
+/* 라벨 열 (130px, 세로선 오른쪽만) */
+.size-measure-table .row-label {
+    width: 130px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    border-right: 2px solid #000;
+}
+/* 값 셀 (자동 균등) */
+.size-measure-table .size-cell { width: auto; }
+.size-measure-table .size-cell input {
+    width: 80px; text-align: center; border: none; background: transparent;
+    font-size: 23.5px; font-weight: 700; font-family: 'Noto Serif KR', serif;
+}
+.size-measure-table .size-cell input:focus {
+    background: #ede5ff; outline: 1px solid var(--purple); border-radius: 3px;
+}
+/* 헤더행 - 하단 굵은 가로선, 라벨 열 세로선 없음 */
+.size-measure-table .header-row td {
+    border-bottom: 2px solid #000;
+    font-size: 23.5px;
+}
+.size-measure-table .header-row .row-label {
+    border-right: none;
+    border-bottom: 2px solid #000;
+}
+/* 사이즈표 하단 텍스트 */
+.size-table-bottom {
+    display: flex; justify-content: space-between; width: 704px;
+    margin-top: 15px;
+}
+.size-table-bottom span:first-child { font-size: 20px; font-weight: 400; color: var(--dark); }
+.size-table-bottom span:last-child { font-size: 19px; font-weight: 700; color: var(--dark); }
+
+/* 더블클릭 편집 가능 요소 */
+.editable { cursor: default; border-radius: 4px; transition: background 0.2s; }
+.editable:hover { background: rgba(100,48,233,0.05); }
+.editable.editing {
+    outline: 2px solid #6430e9;
+    background: #fff;
+    cursor: text;
+    padding: 4px;
+}
+
+/* Product Guide (피그마: 라벨 bold CENTER, 값 regular LEFT, 31.6px) */
+.product-guide-block { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+.product-info-table { width: 701px; border-collapse: collapse; }
+.product-info-table tr { border-bottom: 1px solid #eee; }
+.product-info-table td { padding: 12px 15px; font-size: 24px; vertical-align: top; }
+.pi-label { width: 100px; font-weight: 700; color: #000; text-align: center; }
+.pi-value { color: #000; font-weight: 400; text-align: left; }
+
+/* Check Point (flexbox) */
+.checkpoint-block { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; padding: 0; }
+.checkpoint-grid { width: 100%; }
+.cp-row { display: flex; align-items: center; height: 55px; width: 100%; }
+.cp-label {
+    width: 80px; min-width: 80px; flex-shrink: 0; white-space: nowrap;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark);
+    text-align: left;
+    vertical-align: middle;
+    padding-left: 5px;
+}
+.cp-opt {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+.cp-box {
+    display: inline-block;
+    width: 21px; height: 21px;
+    border: 1.5px solid #000;
+    border-radius: 4px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.cp-opt.active .cp-box { background: var(--purple); border-color: var(--purple); }
+.cp-opt.active { color: var(--dark); }
+.cp-opt:not(.active) { color: #bfbfbf; }
+.cp-opt:not(.active) .cp-box { border-color: #999; }
+
+/* 사이즈 배지 문구 (중복 제거 - 위에서 정의됨) */
+.size-table-bottom {
+    display: flex; justify-content: space-between; width: 704px;
+    margin-top: 15px; font-size: 14px; color: #3f3f3f;
+}
+
+/* 하단 고정 문구 (피그마: Pretendard 22.7px w=400 LEFT #000 lineH=48px letterS=-0.23) */
+.disclaimer-block { width: 678px; text-align: left; }
+.disclaimer-text {
+    font-family: 'Noto Serif KR', 'MaruBuri', serif !important;
+    font-size: 22px;
+    font-weight: 400;
+    color: #000;
+    line-height: 42px;
+    letter-spacing: -0.18px;
+    text-align: left;
+    letter-spacing: -0.02em;
+}
+
+/* === 이미지 에디터 === */
+.image-editor-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.image-editor { background: #fff; border-radius: 10px; width: 600px; overflow: hidden; }
+.editor-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #1a1a2e; color: #fff; font-weight: bold; }
+.editor-header button { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; }
+.editor-preview { width: 100%; height: 400px; overflow: hidden; position: relative; background: #f0f0f0; cursor: move; }
+.editor-preview img { position: absolute; transform-origin: 0 0; }
+.editor-controls { padding: 15px; display: flex; align-items: center; gap: 10px; background: #f8f8f8; }
+.editor-controls label { font-size: 12px; color: #666; }
+.editor-controls input[type="range"] { flex: 1; }
+.editor-controls button { padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-size: 12px; }
+.editor-controls .btn-apply { background: #6430e9; color: #fff; border: none; }
+.loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
