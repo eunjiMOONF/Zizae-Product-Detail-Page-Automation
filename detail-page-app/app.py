@@ -727,8 +727,14 @@ def api_auto_load_images():
         return jsonify({"success": False, "error": "경로와 품번을 입력해주세요"})
 
     # 품번 폴더 경로 (Windows 역슬래시 → 슬래시 변환)
-    base_path = base_path.replace("\\", "/")
+    base_path = base_path.strip().replace("\\", "/")
     folder = os.path.join(base_path, code).replace("\\", "/")
+    print(f"[DEBUG] base_path: '{base_path}'")
+    print(f"[DEBUG] folder: '{folder}'")
+    print(f"[DEBUG] exists: {os.path.exists(folder)}")
+    print(f"[DEBUG] base exists: {os.path.exists(base_path)}")
+    if os.path.exists(base_path):
+        print(f"[DEBUG] base contents: {os.listdir(base_path)[:5]}")
     if not os.path.exists(folder):
         return jsonify({"success": False, "error": f"폴더를 찾을 수 없습니다: {folder}"})
 
