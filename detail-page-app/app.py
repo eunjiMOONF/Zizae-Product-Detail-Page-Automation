@@ -33,9 +33,11 @@ products_cache = {}
 
 
 def get_gcloud_token():
-    """gcloud 인증 토큰 발급"""
+    """gcloud 인증 토큰 발급 (Windows: gcloud.cmd, Mac/Linux: gcloud)"""
+    import platform
+    cmd = 'gcloud.cmd' if platform.system() == 'Windows' else 'gcloud'
     result = subprocess.run(
-        ['gcloud.cmd', 'auth', 'print-access-token'],
+        [cmd, 'auth', 'print-access-token'],
         capture_output=True, text=True, timeout=30
     )
     return result.stdout.strip()
